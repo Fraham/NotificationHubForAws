@@ -54,7 +54,7 @@ if (!(Test-Path $parameterFile -Type Leaf)) {
 
 Write-Host "Finished validating files"
 
-$stackAlreadyExists = (aws cloudformation list-stack | ConvertFrom-Json).StackSummaries | Where-Object { $.StackStatus -ine "DELETE_COMPLETE" -and $_.StackName -ieq $stackName }
+$stackAlreadyExists = (aws cloudformation list-stacks | ConvertFrom-Json).StackSummaries | Where-Object { $_.StackStatus -ine "DELETE_COMPLETE" -and $_.StackName -ieq $stackName }
 
 if (!$?) {
     throw "Unable to check if the stack already exists"
