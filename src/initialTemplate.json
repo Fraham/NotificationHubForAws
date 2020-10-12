@@ -1,0 +1,19 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Notification Hub For Aws - Initial Stack",
+    "Resources": {
+        "DeploymentBucket": {
+            "Type": "AWS::S3::Bucket"
+        }
+    },
+    "Outputs":{
+        "deploymentBucket":{
+            "Value":{
+                "Fn::GetAtt":[
+                    "DeploymentBucket",
+                    "DomainName"
+                ]
+            }
+        }
+    }
+}
