@@ -45,12 +45,11 @@ if (!(Test-Path $parameterFilesFolder)) {
     throw "Unable to find parameter files folder at $($parameterFilesFolder)"
 }
 
-$parameterFile = "$($parameterFilesFolder)$($environment).json"
+$parameterFile = "$($parameterFilesFolder)$($environment).params"
 
 if (!(Test-Path $parameterFile -Type Leaf)) {
     throw "Unable to find parameter file at $($parameterFile)"
 }
-
 
 Write-Host "Finished validating files"
 
@@ -105,6 +104,8 @@ else {
 $bucketDomain = ((((aws cloudformation describe-stacks --stack-name $stackName | ConvertFrom-Json).Stacks[0]).Outputs) | Where-Object { $_.OutputKey -ieq "deploymentBucket" }).OutputValue
 $bucket = ($bucketDomain -split '\.')[0]
 
+$overrides = $(Get-Content $parameterFile)
+
 Push-Location .\src
 
 Push-Location .\dependencies\nodejs\
@@ -115,7 +116,7 @@ Pop-Location
 
 sam package --template-file template.json --s3-bucket $bucket --output-template-file out.yaml
 
-sam deploy --template-file ./out.yaml --stack-name $stackName --capabilities CAPABILITY_IAM
+sam deploy --template-file ./out.yaml --stack-name $stackName --capabilities CAPABILITY_IAM --parameter-overrides $($overrides)
 
 Pop-Location
 
