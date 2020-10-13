@@ -1,15 +1,51 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Notification Hub For Aws - Initial Stack",
+    "Description": "Notification Hub For Aws",
+    "Transform": "AWS::Serverless-2016-10-31",
+    "Globals": {
+        "Function": {
+            "Timeout": 30,
+            "Runtime": "nodejs12.x",
+            "Tracing": "Active",
+            "Layers": [
+                {
+                    "Fn::Sub": "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:2"
+                },
+                {
+                    "Ref": "DependencyLayer"
+                }
+            ]
+        }
+    },
     "Resources": {
         "DeploymentBucket": {
             "Type": "AWS::S3::Bucket"
+        },
+        "SendToSlackFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "sendToSlack.handler"
+            }
+        },
+        "DependencyLayer": {
+            "Type": "AWS::Serverless::LayerVersion",
+            "Properties": {
+                "LayerName": "notification-hub-dependencies",
+                "Description": "Dependencies for notification hub",
+                "ContentUri": "dependencies/",
+                "CompatibleRuntimes": [
+                    "nodejs12.x"
+                ],
+                "LicenseInfo": "MIT",
+                "RetentionPolicy": "Retain"
+            }
         }
     },
-    "Outputs":{
-        "deploymentBucket":{
-            "Value":{
-                "Fn::GetAtt":[
+    "Outputs": {
+        "deploymentBucket": {
+            "Value": {
+                "Fn::GetAtt": [
                     "DeploymentBucket",
                     "DomainName"
                 ]

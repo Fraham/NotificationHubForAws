@@ -102,4 +102,21 @@ else {
     Write-Host "Stack does exist."
 }
 
+$bucketDomain = ((((aws cloudformation describe-stacks --stack-name $stackName | ConvertFrom-Json).Stacks[0]).Outputs) | Where-Object { $_.OutputKey -ieq "deploymentBucket" }).OutputValue
+$bucket = ($bucketDomain -split '\.')[0]
+
+Push-Location .\src
+
+Push-Location .\dependencies\nodejs\
+
+npm install
+
+Pop-Location
+
+sam package --template-file template.json --s3-bucket $bucket --output-template-file out.yaml
+
+sam deploy --template-file ./out.yaml --stack-name $stackName --capabilities CAPABILITY_IAM
+
+Pop-Location
+
 Write-Host "Finished deployment to AWS"
