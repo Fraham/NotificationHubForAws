@@ -131,6 +131,7 @@ const doPostRequest = (body) => {
         };
 
         const req = https.request(options, (res) => {
+            //add check that res.ok is true
             resolve(JSON.stringify(res.statusCode));
         });
 
@@ -160,6 +161,10 @@ exports.handler = async (event) => {
         console.error(err);
         throw err;
     });
+
+    if (!event || !event.Records || event.Records.length == 0) {
+        throw "No event records passed";
+    }
 
     for (var i = 0; i < event.Records.length; i++) {
         try {
@@ -201,6 +206,4 @@ exports.handler = async (event) => {
             console.error(error);
         }
     }
-
-    console.log(event);
 };

@@ -2,16 +2,16 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "Notification Hub For Aws",
     "Transform": "AWS::Serverless-2016-10-31",
-    "Parameters":{
-        "slackChannel":{
+    "Parameters": {
+        "slackChannel": {
             "Type": "String",
             "Description": "Default Slack Channel that messages get sent to"
         },
-        "slackUsername":{
+        "slackUsername": {
             "Type": "String",
             "Description": "Default Slack Username that messages get sent as"
         },
-        "slackIcon":{
+        "slackIcon": {
             "Type": "String",
             "Description": "Default Slack Icon that messages get sent as"
         }
@@ -45,7 +45,7 @@
                         "Type": "SNS",
                         "Properties": {
                             "Topic": {
-                                "Ref": "MessagesTopic"
+                                "Ref": "MessageTopic"
                             }
                         }
                     }
@@ -65,7 +65,120 @@
                             "Ref": "slackIcon"
                         }
                     }
-                }
+                },
+                "Policies": [
+                    {
+                        "AWSSecretsManagerGetSecretValuePolicy": {
+                            "SecretArn": {
+                                "Ref": "SlackApiKey"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "SendToSlackFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "Slack notification lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "SendToSlackFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
+        "CloudWatchAlarmMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "cloudWatchAlarmMap.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "CloudWatchAlarmTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "CloudWatchAlarmMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "CloudWatch Alarm Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "CloudWatchAlarmMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
             }
         },
         "DependencyLayer": {
@@ -81,7 +194,10 @@
                 "RetentionPolicy": "Retain"
             }
         },
-        "MessagesTopic": {
+        "MessageTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
+        "CloudWatchAlarmTopic": {
             "Type": "AWS::SNS::Topic"
         },
         "SlackApiKey": {
@@ -107,7 +223,13 @@
         "messageTopic": {
             "Description": "SNS topic arm for Messages",
             "Value": {
-                "Ref": "MessagesTopic"
+                "Ref": "MessageTopic"
+            }
+        },
+        "cloudWatchAlarmTopic": {
+            "Description": "SNS topic arm for CloudWatch Alarms",
+            "Value": {
+                "Ref": "CloudWatchAlarmTopic"
             }
         }
     }
