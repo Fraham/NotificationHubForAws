@@ -5,15 +5,18 @@
         "DeploymentBucket": {
             "Type": "AWS::S3::Bucket"
         },
-        "MessagesTopic" : {
-            "Type" : "AWS::SNS::Topic"
+        "MessageTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
+        "CloudWatchAlarmTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
-    "Outputs":{
-        "deploymentBucket":{
+    "Outputs": {
+        "deploymentBucket": {
             "Description": "Bucket for storing the SAM application code",
-            "Value":{
-                "Fn::GetAtt":[
+            "Value": {
+                "Fn::GetAtt": [
                     "DeploymentBucket",
                     "DomainName"
                 ]
@@ -22,7 +25,13 @@
         "messageTopic": {
             "Description": "SNS topic arm for Messages",
             "Value": {
-                "Ref": "MessagesTopic"
+                "Ref": "MessageTopic"
+            }
+        },
+        "cloudWatchAlarmTopic": {
+            "Description": "SNS topic arm for CloudWatch Alarms",
+            "Value": {
+                "Ref": "CloudWatchAlarmTopic"
             }
         }
     }
