@@ -25,7 +25,17 @@
             "Type": "AWS::Serverless::Function",
             "Properties": {
                 "CodeUri": "scripts/",
-                "Handler": "sendToSlack.handler"
+                "Handler": "sendToSlack.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "MessagesTopic"
+                            }
+                        }
+                    }
+                }
             }
         },
         "DependencyLayer": {
@@ -40,15 +50,25 @@
                 "LicenseInfo": "MIT",
                 "RetentionPolicy": "Retain"
             }
+        },
+        "MessagesTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
     "Outputs": {
-        "deploymentBucket": {
-            "Value": {
-                "Fn::GetAtt": [
+        "deploymentBucket":{
+            "Description": "Bucket for storing the SAM application code",
+            "Value":{
+                "Fn::GetAtt":[
                     "DeploymentBucket",
                     "DomainName"
                 ]
+            }
+        },
+        "messageTopic": {
+            "Description": "SNS topic arm for Messages",
+            "Value": {
+                "Ref": "MessagesTopic"
             }
         }
     }
