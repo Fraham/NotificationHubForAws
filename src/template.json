@@ -2,6 +2,20 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "Notification Hub For Aws",
     "Transform": "AWS::Serverless-2016-10-31",
+    "Parameters":{
+        "slackChannel":{
+            "Type": "String",
+            "Description": "Default Slack Channel that messages get sent to"
+        },
+        "slackUsername":{
+            "Type": "String",
+            "Description": "Default Slack Username that messages get sent as"
+        },
+        "slackIcon":{
+            "Type": "String",
+            "Description": "Default Slack Icon that messages get sent as"
+        }
+    },
     "Globals": {
         "Function": {
             "Timeout": 30,
@@ -25,7 +39,33 @@
             "Type": "AWS::Serverless::Function",
             "Properties": {
                 "CodeUri": "scripts/",
-                "Handler": "sendToSlack.handler"
+                "Handler": "sendToSlack.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "MessagesTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "SECRET_NAME": {
+                            "Ref": "SlackApiKey"
+                        },
+                        "CHANNEL": {
+                            "Ref": "slackChannel"
+                        },
+                        "USERNAME": {
+                            "Ref": "slackUsername"
+                        },
+                        "ICON": {
+                            "Ref": "slackIcon"
+                        }
+                    }
+                }
             }
         },
         "DependencyLayer": {
@@ -40,15 +80,34 @@
                 "LicenseInfo": "MIT",
                 "RetentionPolicy": "Retain"
             }
+        },
+        "MessagesTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
+        "SlackApiKey": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Description": {
+                    "Fn::Sub": "${AWS::StackName} - Slack Api Key"
+                },
+                "SecretString": "NotSet"
+            }
         }
     },
     "Outputs": {
         "deploymentBucket": {
+            "Description": "Bucket for storing the SAM application code",
             "Value": {
                 "Fn::GetAtt": [
                     "DeploymentBucket",
                     "DomainName"
                 ]
+            }
+        },
+        "messageTopic": {
+            "Description": "SNS topic arm for Messages",
+            "Value": {
+                "Ref": "MessagesTopic"
             }
         }
     }

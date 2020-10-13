@@ -4,15 +4,25 @@
     "Resources": {
         "DeploymentBucket": {
             "Type": "AWS::S3::Bucket"
+        },
+        "MessagesTopic" : {
+            "Type" : "AWS::SNS::Topic"
         }
     },
     "Outputs":{
         "deploymentBucket":{
+            "Description": "Bucket for storing the SAM application code",
             "Value":{
                 "Fn::GetAtt":[
                     "DeploymentBucket",
                     "DomainName"
                 ]
+            }
+        },
+        "messageTopic": {
+            "Description": "SNS topic arm for Messages",
+            "Value": {
+                "Ref": "MessagesTopic"
             }
         }
     }
