@@ -181,6 +181,76 @@
                 "EvaluationPeriods": "1"
             }
         },
+        "CodeBuildMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "codeBuildMap.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "CodeBuildTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "CodeBuildMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "CloudWatch Alarm Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "CodeBuildMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
         "DependencyLayer": {
             "Type": "AWS::Serverless::LayerVersion",
             "Properties": {
@@ -198,6 +268,9 @@
             "Type": "AWS::SNS::Topic"
         },
         "CloudWatchAlarmTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
+        "CodeBuildTopic": {
             "Type": "AWS::SNS::Topic"
         },
         "SlackApiKey": {
@@ -230,6 +303,12 @@
             "Description": "SNS topic arm for CloudWatch Alarms",
             "Value": {
                 "Ref": "CloudWatchAlarmTopic"
+            }
+        },
+        "codeBuildTopic": {
+            "Description": "SNS topic arm for CodeBuild events",
+            "Value": {
+                "Ref": "CodeBuildTopic"
             }
         }
     }

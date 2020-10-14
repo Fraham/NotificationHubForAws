@@ -1,5 +1,7 @@
 const AWSXRay = require('aws-xray-sdk');
-const AWS = require('aws-sdk');
+const AWS = AWSXRay.captureAWS(require('aws-sdk'));
+
+var helper = require('./helper');
 
 exports.handler = (event, context) => {
 
@@ -14,27 +16,10 @@ exports.handler = (event, context) => {
     let messages = [];
 
     for (var i = 0; i < event.Records.length; i++) {
-        if (!event.Records[i].Sns) {
-            throw "Unable to find SNS data";
-        }
 
-        let sns = event.Records[i].Sns;
+        let snsMessage = helper.parseSnsMessage(event.Records[i]);
 
-        if (typeof sns === 'string') {
-            sns = JSON.parse(sns);
-        }
-
-        if (!sns.Message) {
-            throw "Unable to find SNS message data";
-        }
-
-        let snsMessage = sns.Message;
-
-        if (typeof snsMessage === 'string') {
-            snsMessage = JSON.parse(snsMessage);
-        }
-
-        let title = "CodeWatch Alarm";
+        let title = "CloudWatch Alarm";
         let colour = "#FFFFFF";
 
         let colours = {
@@ -102,7 +87,7 @@ exports.handler = (event, context) => {
         "messages": messages
     };
 
-    var snsPublish = AWSXRay.captureAWSClient(new AWS.SNS());
+    var snsPublish = new AWS.SNS();
     var params = {
         Message: JSON.stringify(fullMessage),
         Subject: "CloudWatchAlarm",
