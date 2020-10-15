@@ -1,6 +1,8 @@
 # NotificationHubForAws
 
-NotificationHubForAws
+Notification Hub For Aws is a service that takes events from different Aws services, converts the event into a common message format and then sends out the event to message consumers.
+
+For each of the supported service there is a SNS topic ARN outputted by the CloudFormation script. Adding the ARN to the service SNS logging will push out all the events to the configured message consumers.
 
 ## Post deployment tasks
 
