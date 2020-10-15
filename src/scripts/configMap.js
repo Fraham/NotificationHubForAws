@@ -61,8 +61,6 @@ exports.handler = (event, context) => {
                 title = "Configuration history delivered";
                 break;
             case "ConfigRulesEvaluationStarted":
-                attachments = [];
-
                 title = "Evaluating rules";
 
                 items = [
