@@ -5,6 +5,8 @@ NotificationHubForAws
 ## Post deployment tasks
 
 * Add CloudWatchLambdaInsightsExecutionRolePolicy to the lambdas roles
+* Add slack API token in secrets manager
+* Add discord API token in secrets manager
 
 ## Supported service
 
