@@ -30,4 +30,6 @@ This is a list of the services that are currently supported in the hub. Split in
     * RDS
     * EC2 scaling
     * WAF
+    * S3 events
+        * https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
 * More Message Consumers
