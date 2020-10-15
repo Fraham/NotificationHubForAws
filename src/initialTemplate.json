@@ -13,6 +13,9 @@
         },
         "CodeBuildTopic": {
             "Type": "AWS::SNS::Topic"
+        },
+        "ConfigTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
     "Outputs": {
@@ -41,6 +44,12 @@
             "Description": "SNS topic arm for CodeBuild events",
             "Value": {
                 "Ref": "CodeBuildTopic"
+            }
+        },
+        "configTopic": {
+            "Description": "SNS topic arm for ConfigTopic events",
+            "Value": {
+                "Ref": "ConfigTopic"
             }
         }
     }
