@@ -119,19 +119,5 @@ exports.handler = (event, context) => {
         }
     }
 
-    if (messages.length == 0) {
-        return;
-    }
-
-    let fullMessage = {
-        "messages": messages
-    };
-
-    var snsPublish = new AWS.SNS();
-    var params = {
-        Message: JSON.stringify(fullMessage),
-        Subject: "CodeBuild",
-        TopicArn: process.env.MESSAGE_TOPIC
-    };
-    snsPublish.publish(params, context.done);
+    helper.sendMessagesToSns(messages, "CodeBuild", process.env.MESSAGE_TOPIC, context);
 };
