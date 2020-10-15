@@ -221,7 +221,7 @@
             "Type": "AWS::CloudWatch::Alarm",
             "Properties": {
                 "ActionsEnabled": true,
-                "AlarmDescription": "CloudWatch Alarm Map lambda errors",
+                "AlarmDescription": "CodeBuild Map lambda errors",
                 "ComparisonOperator": "GreaterThanThreshold",
                 "DatapointsToAlarm": 1,
                 "Dimensions": [
@@ -229,6 +229,76 @@
                         "Name": "FunctionName",
                         "Value": {
                             "Ref": "CodeBuildMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
+        "ConfigMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "ConfigMap.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "ConfigTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "ConfigMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "Config Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "ConfigMapFunction"
                         }
                     }
                 ],
@@ -273,6 +343,9 @@
         "CodeBuildTopic": {
             "Type": "AWS::SNS::Topic"
         },
+        "ConfigTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
         "SlackApiKey": {
             "Type": "AWS::SecretsManager::Secret",
             "Properties": {
@@ -309,6 +382,12 @@
             "Description": "SNS topic arm for CodeBuild events",
             "Value": {
                 "Ref": "CodeBuildTopic"
+            }
+        },
+        "configTopic": {
+            "Description": "SNS topic arm for ConfigTopic events",
+            "Value": {
+                "Ref": "ConfigTopic"
             }
         }
     }
