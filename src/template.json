@@ -255,7 +255,7 @@
             "Type": "AWS::Serverless::Function",
             "Properties": {
                 "CodeUri": "scripts/",
-                "Handler": "ConfigMap.handler",
+                "Handler": "configMap.handler",
                 "Events": {
                     "SnsEvent": {
                         "Type": "SNS",
@@ -321,6 +321,76 @@
                 "EvaluationPeriods": "1"
             }
         },
+        "CodePipelineMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "codePipelineMap.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "CodePipelineTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "CodePipelineMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "CodePipeline Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "CodePipelineMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
         "DependencyLayer": {
             "Type": "AWS::Serverless::LayerVersion",
             "Properties": {
@@ -344,6 +414,9 @@
             "Type": "AWS::SNS::Topic"
         },
         "ConfigTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
+        "CodePipelineTopic": {
             "Type": "AWS::SNS::Topic"
         },
         "SlackApiKey": {
@@ -388,6 +461,12 @@
             "Description": "SNS topic arm for ConfigTopic events",
             "Value": {
                 "Ref": "ConfigTopic"
+            }
+        },
+        "codePipelineTopic": {
+            "Description": "SNS topic arm for CodePipeline events",
+            "Value": {
+                "Ref": "CodePipelineTopic"
             }
         }
     }
