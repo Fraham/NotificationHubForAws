@@ -4,9 +4,8 @@ const https = AWSXRay.captureHTTPs(require('https'));
 
 var helper = require('./helper');
 
-var slackApiToken = "";
+var discordApiToken = "";
 var groupOverrideUsername = "";
-var groupOverrideChannel = "";
 var groupOverrideIcon = "";
 
 const doPostRequest = (body) => {
@@ -21,18 +20,10 @@ const doPostRequest = (body) => {
             body = helper.parseJsonString(body.responsePayload);
         }
 
-        let channel = process.env.CHANNEL;
         let username = process.env.USERNAME;
         let icon = process.env.ICON;
-        let attachments = [];
+        let embeds = [];
         let text = "";
-
-        if (groupOverrideChannel) {
-            channel = groupOverrideChannel;
-        }
-        if (body.channel) {
-            channel = body.channel;
-        }
 
         if (groupOverrideUsername) {
             username = groupOverrideUsername;
@@ -54,35 +45,33 @@ const doPostRequest = (body) => {
             for (let i = 0; i < body.items.length; i++) {
                 const item = body.items[i];
 
-                let attachmentText = item.text;
+                let embedText = item.text;
 
                 if (item.lines) {
-                    attachmentText = item.lines.join('\n');
+                    embedText = item.lines.join('\n');
                 }
 
-                let attachment = {
-                    color: item.colour,
-                    text: attachmentText
+                let embed = {
+                    color: parseInt(item.colour.replace("#", "0x")),
+                    title: embedText
                 };
 
-                attachments.push(attachment);
+                embeds.push(embed);
             }
         }
 
-        const slackBody = {
-            "channel": channel,
-            "text": text,
+        const discordBody = {
+            "content": text,
             "username": username,
-            "icon_url": icon,
-            "attachments": attachments
+            "avatar_url": icon,
+            "embeds": embeds
         };
 
         const options = {
             'method': 'POST',
-            'hostname': 'slack.com',
-            'path': '/api/chat.postMessage',
+            'hostname': 'discordapp.com',
+            'path': `/api/webhooks/${discordApiToken}`,
             'headers': {
-                'Authorization': `Bearer ${slackApiToken}`,
                 'Content-Type': 'application/json'
             }
         };
@@ -96,7 +85,7 @@ const doPostRequest = (body) => {
             reject(e.message);
         });
 
-        req.write(JSON.stringify(slackBody));
+        req.write(JSON.stringify(discordBody));
 
         req.end();
     });
@@ -114,7 +103,7 @@ exports.handler = async (event) => {
 
     await helper.getSecret(process.env.SECRET_NAME).then(
         result => {
-            slackApiToken = result;
+            discordApiToken = result;
         }
     ).catch(err => {
         console.error(err);
@@ -127,7 +116,6 @@ exports.handler = async (event) => {
 
             if (snsMessage && snsMessage.messages) {
                 groupOverrideUsername = snsMessage.username;
-                groupOverrideChannel = snsMessage.channel;
                 groupOverrideIcon = snsMessage.icon;
 
                 for (let j = 0; j < snsMessage.messages.length; j++) {
@@ -136,8 +124,8 @@ exports.handler = async (event) => {
 
                     await doPostRequest(element)
                         .then(result => {
-                            if (result != 200) {
-                                throw "Slack didn't respond with a 200";
+                            if (result != 204) {
+                                throw "Discord didn't respond with a 204";
                             }
                         })
                         .catch(err => {
