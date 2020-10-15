@@ -16,6 +16,9 @@
         },
         "ConfigTopic": {
             "Type": "AWS::SNS::Topic"
+        },
+        "CodePipelineTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
     "Outputs": {
@@ -47,9 +50,15 @@
             }
         },
         "configTopic": {
-            "Description": "SNS topic arm for ConfigTopic events",
+            "Description": "SNS topic arm for Config events",
             "Value": {
                 "Ref": "ConfigTopic"
+            }
+        },
+        "codePipelineTopic": {
+            "Description": "SNS topic arm for CodePipeline events",
+            "Value": {
+                "Ref": "CodePipelineTopic"
             }
         }
     }

@@ -9,6 +9,10 @@ exports.handler = (event, context) => {
         throw "Message Topic not set";
     }
 
+    if (!event || !event.Records || event.Records.length == 0) {
+        throw "No event records passed";
+    }
+
     let messages = [];
 
     for (var i = 0; i < event.Records.length; i++) {
