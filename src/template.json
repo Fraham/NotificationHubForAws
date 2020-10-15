@@ -14,6 +14,14 @@
         "slackIcon": {
             "Type": "String",
             "Description": "Default Slack Icon that messages get sent as"
+        },
+        "discordUsername": {
+            "Type": "String",
+            "Description": "Default Discord Username that messages get sent as"
+        },
+        "discordIcon": {
+            "Type": "String",
+            "Description": "Default Discord Icon that messages get sent as"
         }
     },
     "Globals": {
@@ -89,6 +97,79 @@
                         "Name": "FunctionName",
                         "Value": {
                             "Ref": "SendToSlackFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
+        "SendToDiscordFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "sendToDiscord.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "MessageTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "SECRET_NAME": {
+                            "Ref": "DiscordApiKey"
+                        },
+                        "USERNAME": {
+                            "Ref": "discordUsername"
+                        },
+                        "ICON": {
+                            "Ref": "discordIcon"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "AWSSecretsManagerGetSecretValuePolicy": {
+                            "SecretArn": {
+                                "Ref": "DiscordApiKey"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "SendToDiscordFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "Discord notification lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "SendToDiscordFunction"
                         }
                     }
                 ],
@@ -424,6 +505,15 @@
             "Properties": {
                 "Description": {
                     "Fn::Sub": "${AWS::StackName} - Slack Api Key"
+                },
+                "SecretString": "NotSet"
+            }
+        },
+        "DiscordApiKey": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Description": {
+                    "Fn::Sub": "${AWS::StackName} - Discord Api Key"
                 },
                 "SecretString": "NotSet"
             }

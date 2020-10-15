@@ -31,6 +31,8 @@ exports.handler = (event, context) => {
             case "ConfigurationSnapshotDeliveryStarted":
                 continue;
             case "ComplianceChangeNotification":
+                title = "Compliance change notification";
+                
                 let resourceId = snsMessage.resourceId;
                 let newCompliance = snsMessage.newEvaluationResult.complianceType;
                 let rule = snsMessage.configRuleName;
