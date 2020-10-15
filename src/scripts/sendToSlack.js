@@ -116,6 +116,8 @@ const doPostRequest = (body) => {
 
 exports.handler = async (event) => {
 
+    helper.checkRecordsInSns(event);
+
     if (!process.env.SECRET_NAME) {
         throw "Secret Arn not set in environment";
     }
@@ -128,10 +130,6 @@ exports.handler = async (event) => {
         console.error(err);
         throw err;
     });
-
-    if (!event || !event.Records || event.Records.length == 0) {
-        throw "No event records passed";
-    }
 
     for (var i = 0; i < event.Records.length; i++) {
         try {

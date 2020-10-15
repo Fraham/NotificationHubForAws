@@ -3,6 +3,8 @@ Write-Host "Starting deployment to AWS"
 $environment = "environment" #todo: make this as an arg
 $stackName = "notificationHub" #todo: make this as an arg
 
+. "$($PSScriptRoot)/helpers.ps1"
+
 $runningStatuses = @(
     "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
     "UPDATE_ROLLBACK_IN_PROGRESS",
@@ -53,11 +55,7 @@ if (!(Test-Path $parameterFile -Type Leaf)) {
 
 Write-Host "Finished validating files"
 
-$stackAlreadyExists = (aws cloudformation list-stacks | ConvertFrom-Json).StackSummaries | Where-Object { $_.StackStatus -ine "DELETE_COMPLETE" -and $_.StackName -ieq $stackName }
-
-if (!$?) {
-    throw "Unable to check if the stack already exists"
-}
+$stackAlreadyExists = Test-AwsStackExists -StackName $stackName
 
 if (!($stackAlreadyExists)) {
     Write-Host "Stack doesn't exist. Creating stack with initial template: $($initialTemplate)"
@@ -101,8 +99,7 @@ else {
     Write-Host "Stack does exist."
 }
 
-$bucketDomain = ((((aws cloudformation describe-stacks --stack-name $stackName | ConvertFrom-Json).Stacks[0]).Outputs) | Where-Object { $_.OutputKey -ieq "deploymentBucket" }).OutputValue
-$bucket = ($bucketDomain -split '\.')[0]
+$bucket = ((Get-AwsStackOutput -StackName $stackName -OutputName "deploymentBucket") -split '\.')[0]
 
 $overrides = $(Get-Content $parameterFile)
 
