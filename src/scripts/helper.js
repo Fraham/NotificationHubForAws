@@ -54,5 +54,27 @@ module.exports = {
         }
 
         return this.parseJsonString(sns.Message);
+    },
+    checkRecordsInSns: function (event) {
+        if (!event || !event.Records || event.Records.length == 0) {
+            throw "No event records passed";
+        }
+    },
+    sendMessagesToSns: function (messages, subject, topicArn, context) {
+        if (messages.length == 0) {
+            return;
+        }
+    
+        let fullMessage = {
+            "messages": messages
+        };
+    
+        var snsPublish = new AWS.SNS();
+        var params = {
+            Message: JSON.stringify(fullMessage),
+            Subject: subject,
+            TopicArn: topicArn
+        };
+        snsPublish.publish(params, context.done);
     }
 };

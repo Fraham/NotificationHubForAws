@@ -9,9 +9,7 @@ exports.handler = (event, context) => {
         throw "Message Topic not set";
     }
 
-    if (!event || !event.Records || event.Records.length == 0) {
-        throw "No event records passed";
-    }
+    helper.checkRecordsInSns(event);
 
     let messages = [];
 
