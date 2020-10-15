@@ -10,6 +10,9 @@
         },
         "CloudWatchAlarmTopic": {
             "Type": "AWS::SNS::Topic"
+        },
+        "CodeBuildTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
     "Outputs": {
@@ -32,6 +35,12 @@
             "Description": "SNS topic arm for CloudWatch Alarms",
             "Value": {
                 "Ref": "CloudWatchAlarmTopic"
+            }
+        },
+        "codeBuildTopic": {
+            "Description": "SNS topic arm for CodeBuild events",
+            "Value": {
+                "Ref": "CodeBuildTopic"
             }
         }
     }
