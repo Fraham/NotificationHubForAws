@@ -5,6 +5,70 @@
         "DeploymentBucket": {
             "Type": "AWS::S3::Bucket"
         },
+        "S3EventTopicPolicy": {
+            "Type": "AWS::SNS::TopicPolicy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "S3EventTopicPolicySns",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": [
+                                "sns:Publish"
+                            ],
+                            "Resource": {
+                                "Ref": "S3EventTopic"
+                            },
+                            "Condition": {
+                                "ArnLike": {
+                                    "aws:SourceArn": {
+                                        "Fn::Sub": "arn:aws:s3:*:*:${DeploymentBucket}"
+                                    }
+                                },
+                                "StringEquals": {
+                                    "aws:SourceAccount": {
+                                        "Ref": "AWS::AccountId"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "Sid": "S3EventTopicPolicyLambda",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": [
+                                "SNS:GetTopicAttributes",
+                                "SNS:SetTopicAttributes",
+                                "SNS:AddPermission",
+                                "SNS:RemovePermission",
+                                "SNS:DeleteTopic",
+                                "SNS:Subscribe",
+                                "SNS:ListSubscriptionsByTopic",
+                                "SNS:Publish",
+                                "SNS:Receive"
+                            ],
+                            "Resource": {
+                                "Ref": "S3EventTopic"
+                            },
+                            "Condition": {
+                                "StringEquals": {
+                                    "aws:SourceOwner": {
+                                        "Ref": "AWS::AccountId"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Topics": [
+                    {
+                        "Ref": "S3EventTopic"
+                    }
+                ]
+            }
+        },
         "MessageTopic": {
             "Type": "AWS::SNS::Topic"
         },
@@ -19,6 +83,9 @@
         },
         "CodePipelineTopic": {
             "Type": "AWS::SNS::Topic"
+        },
+        "S3EventTopic": {
+            "Type": "AWS::SNS::Topic"
         }
     },
     "Outputs": {
@@ -32,33 +99,39 @@
             }
         },
         "messageTopic": {
-            "Description": "SNS topic arm for Messages",
+            "Description": "SNS topic arn for Messages",
             "Value": {
                 "Ref": "MessageTopic"
             }
         },
         "cloudWatchAlarmTopic": {
-            "Description": "SNS topic arm for CloudWatch Alarms",
+            "Description": "SNS topic arn for CloudWatch Alarms",
             "Value": {
                 "Ref": "CloudWatchAlarmTopic"
             }
         },
         "codeBuildTopic": {
-            "Description": "SNS topic arm for CodeBuild events",
+            "Description": "SNS topic arn for CodeBuild events",
             "Value": {
                 "Ref": "CodeBuildTopic"
             }
         },
         "configTopic": {
-            "Description": "SNS topic arm for Config events",
+            "Description": "SNS topic arn for Config events",
             "Value": {
                 "Ref": "ConfigTopic"
             }
         },
         "codePipelineTopic": {
-            "Description": "SNS topic arm for CodePipeline events",
+            "Description": "SNS topic arn for CodePipeline events",
             "Value": {
                 "Ref": "CodePipelineTopic"
+            }
+        },
+        "s3EventTopic": {
+            "Description": "SNS topic arn for S3 events",
+            "Value": {
+                "Ref": "S3EventTopic"
             }
         }
     }

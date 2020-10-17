@@ -41,7 +41,89 @@
     },
     "Resources": {
         "DeploymentBucket": {
-            "Type": "AWS::S3::Bucket"
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "NotificationConfiguration": {
+                    "TopicConfigurations": [
+                        {
+                            "Topic": {
+                                "Ref": "S3EventTopic"
+                            },
+                            "Event": "s3:ObjectCreated:*"
+                        },
+                        {
+                            "Topic": {
+                                "Ref": "S3EventTopic"
+                            },
+                            "Event": "s3:ObjectRemoved:*"
+                        }
+                    ]
+                }
+            }
+        },
+        "S3EventTopicPolicy": {
+            "Type": "AWS::SNS::TopicPolicy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "S3EventTopicPolicySns",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": [
+                                "sns:Publish"
+                            ],
+                            "Resource": {
+                                "Ref": "S3EventTopic"
+                            },
+                            "Condition": {
+                                "ArnLike": {
+                                    "aws:SourceArn": {
+                                        "Fn::Sub": "arn:aws:s3:*:*:${DeploymentBucket}"
+                                    }
+                                },
+                                "StringEquals": {
+                                    "aws:SourceAccount": {
+                                        "Ref": "AWS::AccountId"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "Sid": "S3EventTopicPolicyLambda",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": [
+                                "SNS:GetTopicAttributes",
+                                "SNS:SetTopicAttributes",
+                                "SNS:AddPermission",
+                                "SNS:RemovePermission",
+                                "SNS:DeleteTopic",
+                                "SNS:Subscribe",
+                                "SNS:ListSubscriptionsByTopic",
+                                "SNS:Publish",
+                                "SNS:Receive"
+                            ],
+                            "Resource": {
+                                "Ref": "S3EventTopic"
+                            },
+                            "Condition": {
+                                "StringEquals": {
+                                    "aws:SourceOwner": {
+                                        "Ref": "AWS::AccountId"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "Topics": [
+                    {
+                        "Ref": "S3EventTopic"
+                    }
+                ]
+            }
         },
         "SendToSlackFunction": {
             "Type": "AWS::Serverless::Function",
@@ -472,6 +554,76 @@
                 "EvaluationPeriods": "1"
             }
         },
+        "S3EventMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "s3EventMap.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "S3EventTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "S3EventMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "S3Event Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "S3EventMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
         "DependencyLayer": {
             "Type": "AWS::Serverless::LayerVersion",
             "Properties": {
@@ -498,6 +650,9 @@
             "Type": "AWS::SNS::Topic"
         },
         "CodePipelineTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
+        "S3EventTopic": {
             "Type": "AWS::SNS::Topic"
         },
         "SlackApiKey": {
@@ -530,33 +685,39 @@
             }
         },
         "messageTopic": {
-            "Description": "SNS topic arm for Messages",
+            "Description": "SNS topic arn for Messages",
             "Value": {
                 "Ref": "MessageTopic"
             }
         },
         "cloudWatchAlarmTopic": {
-            "Description": "SNS topic arm for CloudWatch Alarms",
+            "Description": "SNS topic arn for CloudWatch Alarms",
             "Value": {
                 "Ref": "CloudWatchAlarmTopic"
             }
         },
         "codeBuildTopic": {
-            "Description": "SNS topic arm for CodeBuild events",
+            "Description": "SNS topic arn for CodeBuild events",
             "Value": {
                 "Ref": "CodeBuildTopic"
             }
         },
         "configTopic": {
-            "Description": "SNS topic arm for ConfigTopic events",
+            "Description": "SNS topic arn for ConfigTopic events",
             "Value": {
                 "Ref": "ConfigTopic"
             }
         },
         "codePipelineTopic": {
-            "Description": "SNS topic arm for CodePipeline events",
+            "Description": "SNS topic arn for CodePipeline events",
             "Value": {
                 "Ref": "CodePipelineTopic"
+            }
+        },
+        "s3EventTopic": {
+            "Description": "SNS topic arn for S3 events",
+            "Value": {
+                "Ref": "S3EventTopic"
             }
         }
     }

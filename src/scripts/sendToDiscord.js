@@ -53,7 +53,7 @@ const doPostRequest = (body) => {
 
                 let embed = {
                     color: parseInt(item.colour.replace("#", "0x")),
-                    title: embedText
+                    description: embedText
                 };
 
                 embeds.push(embed);
