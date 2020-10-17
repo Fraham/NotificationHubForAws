@@ -15,21 +15,23 @@ For each of the supported service there is a SNS topic ARN outputted by the Clou
 This is a list of the services that are currently supported in the hub. Split into two sections, event creators are the services that generate the notifications and message consumers are the services that display the notification.
 
 ### Event Creators
+
 * CloudWatch Alarms
 * CodeBuild
 * CodePipeline
 * Config
+* S3 Events
 
 ### Message Consumers
+
 * Slack
 * Discord
 
 ## Future extends
+
 * Events through ApiGateway
 * More Event Creators
-    * RDS
-    * EC2 scaling
-    * WAF
-    * S3 events
-        * https://docs.aws.amazon.com/AmazonS3/latest/dev/notification-content-structure.html
+  * RDS
+  * EC2 scaling
+  * WAF
 * More Message Consumers
