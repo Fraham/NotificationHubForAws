@@ -18,7 +18,7 @@ exports.handler = (event, context) => {
 
         let snsMessage = helper.parseSnsMessage(event.Records[i]);
 
-        if (snsMessage.event && snsMessage.event === "s3:TestEvent"){
+        if ((snsMessage.event && snsMessage.event === "s3:TestEvent") || (snsMessage.Event && snsMessage.Event === "s3:TestEvent")){
             /* 
                 S3 sends out this test event when a new event configuration is setup
                 It doesn't conform to the same standard so I just move past it

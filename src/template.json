@@ -70,24 +70,16 @@
                         {
                             "Sid": "S3EventTopicPolicySns",
                             "Effect": "Allow",
-                            "Principal": "*",
+                            "Principal": {
+                                "Service": [
+                                    "s3.amazonaws.com"
+                                ]
+                            },
                             "Action": [
                                 "sns:Publish"
                             ],
                             "Resource": {
                                 "Ref": "S3EventTopic"
-                            },
-                            "Condition": {
-                                "ArnLike": {
-                                    "aws:SourceArn": {
-                                        "Fn::Sub": "arn:aws:s3:*:*:${DeploymentBucket}"
-                                    }
-                                },
-                                "StringEquals": {
-                                    "aws:SourceAccount": {
-                                        "Ref": "AWS::AccountId"
-                                    }
-                                }
                             }
                         },
                         {
@@ -107,13 +99,6 @@
                             ],
                             "Resource": {
                                 "Ref": "S3EventTopic"
-                            },
-                            "Condition": {
-                                "StringEquals": {
-                                    "aws:SourceOwner": {
-                                        "Ref": "AWS::AccountId"
-                                    }
-                                }
                             }
                         }
                     ]
