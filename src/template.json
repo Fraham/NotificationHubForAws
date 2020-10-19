@@ -609,6 +609,78 @@
                 "EvaluationPeriods": "1"
             }
         },
+        "StandardMessageMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "standardMessageMap.handler",
+                "Events": {
+                    "HelloWorldApi": {
+                        "Type": "Api",
+                        "Properties": {
+                            "RestApiId": {
+                                "Ref": "NotificationApiGateway"
+                            },
+                            "Path": "/",
+                            "Method": "POST"
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "StandardMessageMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "StandardMessage Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "StandardMessageMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
         "DependencyLayer": {
             "Type": "AWS::Serverless::LayerVersion",
             "Properties": {
@@ -656,6 +728,21 @@
                     "Fn::Sub": "${AWS::StackName} - Discord Api Key"
                 },
                 "SecretString": "NotSet"
+            }
+        },
+        "NotificationApiGateway": {
+            "Type": "AWS::Serverless::Api",
+            "Properties": {
+                "StageName": "Staging",
+                "TracingEnabled": true,
+                "MethodSettings": [
+                    {
+                        "ResourcePath": "/",
+                        "HttpMethod": "POST",
+                        "LoggingLevel": "ERROR",
+                        "MetricsEnabled": true
+                    }
+                ]
             }
         }
     },

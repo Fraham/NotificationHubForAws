@@ -61,7 +61,7 @@ module.exports = {
         }
     },
     sendMessagesToSns: function (messages, subject, topicArn, context) {
-        if (messages.length == 0) {
+        if (!messages || messages.length == 0) {
             return;
         }
     

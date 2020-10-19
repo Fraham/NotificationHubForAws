@@ -99,6 +99,10 @@ else {
     Write-Host "Stack does exist."
 }
 
+#todo: add cloudwatch role for api gateway to inital setup
+#todo: add cli to check if account has cloudwatch arn already
+#todo: if not, add it
+
 $bucket = ((Get-AwsStackOutput -StackName $stackName -OutputName "deploymentBucket") -split '\.')[0]
 
 $overrides = $(Get-Content $parameterFile)
