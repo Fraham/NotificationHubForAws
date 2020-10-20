@@ -742,7 +742,13 @@
                         "LoggingLevel": "ERROR",
                         "MetricsEnabled": true
                     }
-                ]
+                ],
+                "Auth": {
+                    "ApiKeyRequired": true,
+                    "UsagePlan":{
+                        "CreateUsagePlan": "SHARED"
+                    }
+                }
             }
         }
     },
