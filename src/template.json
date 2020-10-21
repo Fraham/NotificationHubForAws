@@ -615,14 +615,18 @@
                 "CodeUri": "scripts/",
                 "Handler": "standardMessageMap.handler",
                 "Events": {
-                    "HelloWorldApi": {
+                    "MessagingApi": {
                         "Type": "Api",
                         "Properties": {
                             "RestApiId": {
                                 "Ref": "NotificationApiGateway"
                             },
                             "Path": "/",
-                            "Method": "POST"
+                            "Method": "POST",
+                            "RequestModel": {
+                                "Model": "Messages",
+                                "required": true
+                            }
                         }
                     }
                 },
@@ -747,6 +751,26 @@
                     "ApiKeyRequired": true,
                     "UsagePlan":{
                         "CreateUsagePlan": "SHARED"
+                    }
+                },
+                "Models": {
+                    "Messages": {
+                        "type": "object",
+                        "required": [
+                            "username",
+                            "employee_id"
+                        ],
+                        "properties": {
+                            "username": {
+                                "type": "string"
+                            },
+                            "employee_id": {
+                                "type": "integer"
+                            },
+                            "department": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }
