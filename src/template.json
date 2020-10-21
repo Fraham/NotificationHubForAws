@@ -110,6 +110,36 @@
                 ]
             }
         },
+        "BudgetTopicPolicy": {
+            "Type": "AWS::SNS::TopicPolicy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "BudgetTopicPolicySns",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "budgets.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sns:Publish"
+                            ],
+                            "Resource": {
+                                "Ref": "BudgetTopic"
+                            }
+                        }
+                    ]
+                },
+                "Topics": [
+                    {
+                        "Ref": "BudgetTopic"
+                    }
+                ]
+            }
+        },
         "SendToSlackFunction": {
             "Type": "AWS::Serverless::Function",
             "Properties": {
@@ -609,6 +639,76 @@
                 "EvaluationPeriods": "1"
             }
         },
+        "BudgetMapFunction": {
+            "Type": "AWS::Serverless::Function",
+            "Properties": {
+                "CodeUri": "scripts/",
+                "Handler": "budgetMap.handler",
+                "Events": {
+                    "SnsEvent": {
+                        "Type": "SNS",
+                        "Properties": {
+                            "Topic": {
+                                "Ref": "BudgetTopic"
+                            }
+                        }
+                    }
+                },
+                "Environment": {
+                    "Variables": {
+                        "MESSAGE_TOPIC": {
+                            "Ref": "MessageTopic"
+                        }
+                    }
+                },
+                "Policies": [
+                    {
+                        "SNSPublishMessagePolicy": {
+                            "TopicName": {
+                                "Fn::GetAtt": [
+                                    "MessageTopic",
+                                    "TopicName"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "BudgetMapFunctionErrorsAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "ActionsEnabled": true,
+                "AlarmDescription": "Budget Map lambda errors",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "DatapointsToAlarm": 1,
+                "Dimensions": [
+                    {
+                        "Name": "FunctionName",
+                        "Value": {
+                            "Ref": "BudgetMapFunction"
+                        }
+                    }
+                ],
+                "MetricName": "Errors",
+                "Namespace": "AWS/Lambda",
+                "AlarmActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "OKActions": [
+                    {
+                        "Ref": "CloudWatchAlarmTopic"
+                    }
+                ],
+                "Period": 300,
+                "Statistic": "Sum",
+                "Threshold": 0,
+                "TreatMissingData": "notBreaching",
+                "EvaluationPeriods": "1"
+            }
+        },
         "StandardMessageMapFunction": {
             "Type": "AWS::Serverless::Function",
             "Properties": {
@@ -716,6 +816,9 @@
         "S3EventTopic": {
             "Type": "AWS::SNS::Topic"
         },
+        "BudgetTopic": {
+            "Type": "AWS::SNS::Topic"
+        },
         "SlackApiKey": {
             "Type": "AWS::SecretsManager::Secret",
             "Properties": {
@@ -820,6 +923,12 @@
             "Description": "SNS topic arn for S3 events",
             "Value": {
                 "Ref": "S3EventTopic"
+            }
+        },
+        "budgetTopic": {
+            "Description": "SNS topic arn for budget",
+            "Value": {
+                "Ref": "BudgetTopic"
             }
         }
     }
